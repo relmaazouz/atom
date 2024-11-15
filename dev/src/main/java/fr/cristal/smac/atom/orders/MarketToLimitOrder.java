@@ -36,28 +36,29 @@ public class MarketToLimitOrder extends LimitOrder {
 		this(obName, extId, direction, quantity, -1);
 	} // infinite life
 
-    public void execute(OrderBook ob)
-    {
-    	// Contrairement au Market à qui on donne un prix infini, un marketToLimit, on lui donne le prix du meilleur
-    	// une seule fois (d'où l'init à -1)
-    	// on ne peut le faire qu'à l'exec car sinon on n'a pas acces à l'orderbook
-    	if (direction == LimitOrder.ASK && price == -1) 
-    		if (ob.bid.isEmpty())
-    			throw new RuntimeException("Ask Market-To-Limit with empty BID part");
-    		else
-    			price=ob.bid.first().price;
-    	if (direction == LimitOrder.BID && price == -1) 
-    		if (ob.ask.isEmpty())
-    			throw new RuntimeException("Bid Market-To-Limit with empty ASK part");
-    		else
-    			price=ob.ask.first().price;    	
-    	super.execute(ob);
-    	
-    }
-   
+	public void execute(OrderBook ob) {
+		// Contrairement au Market à qui on donne un prix infini, un marketToLimit, on
+		// lui donne le prix du meilleur
+		// une seule fois (d'où l'init à -1)
+		// on ne peut le faire qu'à l'exec car sinon on n'a pas acces à l'orderbook
+		if (direction == LimitOrder.ASK && price == -1)
+			if (ob.bid.isEmpty())
+				throw new RuntimeException("Ask Market-To-Limit with empty BID part");
+			else
+				price = ob.bid.first().price;
+		if (direction == LimitOrder.BID && price == -1)
+			if (ob.ask.isEmpty())
+				throw new RuntimeException("Bid Market-To-Limit with empty ASK part");
+			else
+				price = ob.ask.first().price;
+		super.execute(ob);
+
+	}
+
 	public String toString() {
-		return ("Order;" + obName + ";" + (sender != null ? sender.name : "UNKNOWN") + ";" + extId + ";"+type+";" + direction
-				+ ";" + price+";"+quantity + ";" + validity);
+		return ("Order;" + obName + ";" + (sender != null ? sender.name : "UNKNOWN") + ";" + extId + ";" + type + ";"
+				+ direction
+				+ ";" + price + ";" + quantity + ";" + validity + ";" + timestamp);
 	}
 
 }

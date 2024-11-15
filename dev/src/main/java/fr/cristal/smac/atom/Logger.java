@@ -15,19 +15,18 @@ package fr.cristal.smac.atom;
 import fr.cristal.smac.atom.orders.LimitOrder;
 
 import java.io.*;
+import java.sql.Timestamp;
 import java.util.*;
-
 
 /*
 
 */
 
-
 public class Logger {
 
     private PrintStream pw = null;
     protected MarketPlace market = null;
-    
+
     public int orderbooksVisibleSpread = 0; // FINAXYS
 
     public static Logger getLogger() {
@@ -37,19 +36,17 @@ public class Logger {
     public void setMarket(MarketPlace market) {
         this.market = market;
     }
-    
-    
-    private void printHeaders()
-    {
-    	pw.println("Order;obname;agent;Oid;type;dir;price;quty;validity");
-    	pw.println("Tick;numtick;obname;bestask;bestbid;lastFixedPrice");
-    	pw.println("Price;obname;price;quty;dirTrigger;AgTrigger;Oid;ag2;Oid2;bestask;bestbid");
-    	pw.println("Agent;name;cash;obName;invests;LastFixedPrice");
-    	pw.println("Exec;agent;Oid");
-    	pw.println("Day;numday;obName;firstPrice;lastPrice;lowestPrice;highestPrice;nbPricesFixed");
-    	// pw.println("Orderbook;5xbestask;5xbestbid");
+
+    private void printHeaders() {
+        pw.println("Order;obname;agent;Oid;type;dir;price;quty;validity");
+        pw.println("Tick;numtick;obname;bestask;bestbid;lastFixedPrice");
+        pw.println("Price;obname;price;quty;dirTrigger;AgTrigger;Oid;ag2;Oid2;bestask;bestbid");
+        pw.println("Agent;name;cash;obName;invests;LastFixedPrice");
+        pw.println("Exec;agent;Oid");
+        pw.println("Day;numday;obName;firstPrice;lastPrice;lowestPrice;highestPrice;nbPricesFixed");
+        // pw.println("Orderbook;5xbestask;5xbestbid");
     }
-    
+
     public Logger() {
         this.pw = null;
     }
@@ -75,11 +72,11 @@ public class Logger {
             pw.flush();
         }
     }
-    
+
     public void println() {
         print("\n");
     }
-    
+
     public void print(String s) {
         if (pw != null) {
             pw.print(s);
@@ -103,24 +100,25 @@ public class Logger {
         if (pw != null) {
             StringBuilder sb;
             for (OrderBook ob : orderbooks) {
-                    /*
-                    print(ob.obName + ";"+(ob.lastFixedPrice != null ? ob.lastFixedPrice.price : "none") + ";"
-                    + ob.numberOfPricesFixed+";");
-                    */
-                
-                    sb = new StringBuilder();
-                    sb.append(ob.obName).append(";").append(ob.firstPriceOfDay);
-                    sb.append(";").append(ob.lowestPriceOfDay).append(";");
-                    sb.append(ob.highestPriceOfDay).append(";").append(ob.lastPriceOfDay);
-                    sb.append(";").append(ob.numberOfPricesFixed).append(";");
-                    println("Day;" + nbDays + ";"+sb.toString());
-                
-                    // A terme remplacer ce code par un dump des DayLog
-                    // et remplacer le nombre de prix fixés par les volumes échangés
                 /*
-                    System.out.println(ob.obName+" > "+ob.extradayLog);
-                    println("Day;" + nbDays + ";"+ob.extradayLog.get(nbDays-1).toString());
-                */
+                 * print(ob.obName + ";"+(ob.lastFixedPrice != null ? ob.lastFixedPrice.price :
+                 * "none") + ";"
+                 * + ob.numberOfPricesFixed+";");
+                 */
+
+                sb = new StringBuilder();
+                sb.append(ob.obName).append(";").append(ob.firstPriceOfDay);
+                sb.append(";").append(ob.lowestPriceOfDay).append(";");
+                sb.append(ob.highestPriceOfDay).append(";").append(ob.lastPriceOfDay);
+                sb.append(";").append(ob.numberOfPricesFixed).append(";");
+                println("Day;" + nbDays + ";" + sb.toString());
+
+                // A terme remplacer ce code par un dump des DayLog
+                // et remplacer le nombre de prix fixés par les volumes échangés
+                /*
+                 * System.out.println(ob.obName+" > "+ob.extradayLog);
+                 * println("Day;" + nbDays + ";"+ob.extradayLog.get(nbDays-1).toString());
+                 */
             }
         }
     }
@@ -146,9 +144,9 @@ public class Logger {
 
     protected String dumpOrderBook(String obName) {
         StringBuffer sb = new StringBuffer();
-        
+
         sb.append("Auctions;").append(obName).append(";");
-        
+
         OrderBook ob = market.orderBooks.get(obName);
         int i = 0;
         Iterator<LimitOrder> it = ob.ask.iterator();
@@ -168,10 +166,11 @@ public class Logger {
         sb.append("\n");
         return sb.toString();
     }
-    
-    public void price(PriceRecord p,long bestAskPrice, long bestBidPrice, Order bask, Order bbid) {
+
+    public void price(PriceRecord p, long bestAskPrice, long bestBidPrice, Order bask, Order bbid) {
         if (pw != null) {
-            println("Price;" + p + ";" + bestAskPrice + ";" + bestBidPrice);
+            println("Price;" + p + ";" + bestAskPrice + ";" + bestBidPrice + ";"
+                    + p.timestamp);
             // Preference FINAXYS - Bittner
             // println("Price;" + p + ";"+bask+";"+bbid);
             if (orderbooksVisibleSpread > 0) {
@@ -182,7 +181,8 @@ public class Logger {
 
     public void agent(Agent a, Order o, PriceRecord lastFixed) {
         if (pw != null) {
-            println("Agent;" + a.name + ";" + a.cash + ";" + o.obName + ";" + a.getInvest(o.obName) + ";" + (lastFixed != null ? lastFixed.price : "none"));
+            println("Agent;" + a.name + ";" + a.cash + ";" + o.obName + ";" + a.getInvest(o.obName) + ";"
+                    + (lastFixed != null ? lastFixed.price : "none"));
         }
     }
 

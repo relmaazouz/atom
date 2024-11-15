@@ -47,6 +47,6 @@ public class StopLossMarketOrder extends StopLossLimitOrder
 	public String toString() 
 	{
 		return ("Order;" + obName + ";" + (sender != null ? sender.name : "UNKNOWN") + ";" + extId + ";"+type+";" + direction
-				+ ";" + quantity + ";" + seuil + ";" + validity);
+				+ ";" + quantity + ";" + seuil + ";" + validity+";"+timestamp);
 	}
 }

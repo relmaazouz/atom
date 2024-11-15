@@ -12,6 +12,7 @@ Date    : 14/12/2008
 
 package fr.cristal.smac.atom;
 
+import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import fr.cristal.smac.atom.orders.*;
@@ -270,6 +271,7 @@ public class StringOrderParser {
         }
 
         order.sender = a;
+        order.timestamp = new Timestamp(System.currentTimeMillis()).getTime();
 
         // System.err.println("StringOrderParser: "+order);
         return order;

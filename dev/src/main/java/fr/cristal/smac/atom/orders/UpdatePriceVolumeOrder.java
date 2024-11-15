@@ -11,6 +11,8 @@ Date    : 14/06/2024
 
 package fr.cristal.smac.atom.orders;
 
+import java.sql.Timestamp;
+
 import fr.cristal.smac.atom.*;
 
 public class UpdatePriceVolumeOrder extends Order {
@@ -46,6 +48,6 @@ public class UpdatePriceVolumeOrder extends Order {
     }
 
     public String toString() {
-        return super.toString() + ";" + extIdToUpdate + ";" + qutyToSet + ";" + priceToSet;
+        return super.toString() + ";" + extIdToUpdate + ";" + qutyToSet + ";" + priceToSet + ";" + timestamp;
     }
 }

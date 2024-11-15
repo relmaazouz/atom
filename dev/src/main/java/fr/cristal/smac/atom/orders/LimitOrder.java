@@ -14,18 +14,19 @@ package fr.cristal.smac.atom.orders;
 
 import fr.cristal.smac.atom.*;
 
-public class LimitOrder extends Order
-{
+public class LimitOrder extends Order {
     public char direction;
     public int quantity;
     public int initQuty;
-    public long price;    /* Should be final Because of TreeSet and its comparator you can't change the price */
+    public long price; /*
+                        * Should be final Because of TreeSet and its comparator you can't change the
+                        * price
+                        */
     public long validity;
     public static final char ASK = 'A';
     public static final char BID = 'B';
 
-    public LimitOrder(String obName, String extId, char direction, int quantity, long price, int validity)
-    {
+    public LimitOrder(String obName, String extId, char direction, int quantity, long price, int validity) {
         super(obName, extId);
         this.direction = direction;
         this.quantity = quantity;
@@ -35,22 +36,18 @@ public class LimitOrder extends Order
         this.type = 'L';
     }
 
-    public LimitOrder(String obName, String extId, char direction, int quantity, long price)
-    {
+    public LimitOrder(String obName, String extId, char direction, int quantity, long price) {
         this(obName, extId, direction, quantity, price, -1);
     } // infinite life
 
-    
-    public void execute(OrderBook ob)
-    {
+    public void execute(OrderBook ob) {
         if (direction == LimitOrder.ASK)
             ob.ask.add(this); // Collections.sort(ask,Sort.ASK);
         else
             ob.bid.add(this); // Collections.sort(bid,Sort.BID);
     }
 
-    public String toString()
-    {
-        return super.toString() + ";" + direction + ";" + price + ";" + quantity + ";" + validity;
+    public String toString() {
+        return super.toString() + ";" + direction + ";" + price + ";" + quantity + ";" + validity + ";" + timestamp;
     } // plus naturel !
 }
