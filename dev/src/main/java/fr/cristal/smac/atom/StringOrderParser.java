@@ -237,7 +237,8 @@ public class StringOrderParser {
                 qty = Integer.parseInt(cols[6]);
                 price = Integer.parseInt(cols[7]);
                 dir = cols[5].charAt(0);
-                order = new UpdatePriceVolumeOrder(obName, extId, idToKill, qty, price);
+                // order = new UpdatePriceVolumeOrder(obName, extId, idToKill, qty, price);
+                order = new LimitOrder(obName, extId, dir, qty, price);
 
                 break; // price=orderToUpdate
             case 'T': // MarketToLimit
