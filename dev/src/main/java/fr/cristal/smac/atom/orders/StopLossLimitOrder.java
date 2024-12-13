@@ -41,13 +41,13 @@ public class StopLossLimitOrder extends LimitOrder {
                 type = 'S';
                 this.seuil = seuil;
                 this.prixIntro = prixIntro;
-                if (direction == LimitOrder.ASK && prixIntro >= seuil) {
+                if (direction == LimitOrder.ASK && prixIntro > seuil) {
                         throw new RuntimeException(
-                                        "StopLossLimit ASK pb : the limit price is higher than the threshold price");
+                                        "StopLossLimit ASK pb : the limit price is higher than the threshold price: Order ID = "+extId);
                 }
-                if (direction == LimitOrder.BID && prixIntro <= seuil) {
+                if (direction == LimitOrder.BID && prixIntro < seuil) {
                         throw new RuntimeException(
-                                        "StopLossLimit BID pb : the limit price is lower than the threshold price");
+                                        "StopLossLimit BID pb : the limit price is lower than the threshold price: Order ID = "+extId);
                 }
         }
 

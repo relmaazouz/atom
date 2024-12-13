@@ -14,6 +14,8 @@ package fr.cristal.smac.atom;
 
 import fr.cristal.smac.atom.orders.*;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class OrderBook {
     // this class is used only in the bestEvenPrice() method, to compute the
@@ -184,8 +186,8 @@ public class OrderBook {
             if (order.quantity < minQty) {
                 minQty = order.quantity;
             }
-            // for logging the feature metrics at order entrys
-            extraString = ";" + this.getOrderRank(order) + ";" + this.get_bid_ask_spread();
+            // for logging the feature metrics at order entry
+            extraString = ";" + this.getOrderRank(order) + ";" + this.getOrderRankWithinPrice(order) + ";" + this.get_bid_ask_spread()+";"+this.getOrderPercentile(order);
         }
 
         /*
@@ -681,7 +683,7 @@ public class OrderBook {
 
     private String get_bid_ask_spread() {
 
-        if (bid.isEmpty() || ask.isEmpty()) {
+        if (this.bid.isEmpty() || this.ask.isEmpty()) {
             return "*";
         }
 
@@ -693,39 +695,38 @@ public class OrderBook {
 
     private int getOrderRank(LimitOrder lo) {
 
-        if (lo.direction == 'A') {
-            return this.ask.headSet(lo).size() + 1;
-        }
+        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
 
-        if (lo.direction == 'B') {
-            return this.bid.headSet(lo).size() + 1;
-        }
-        return 0;
+        return basket.headSet(lo).size() +1 ;
     }
 
-    public double getVolPercentage(LimitOrder lo) {
-        int percent = 0;
-        if (lo.direction == 'A') {
-
-        }
-
-        if (lo.direction == 'B') {
-
-        }
-
-        return percent;
+    private int getBasketSize(LimitOrder lo) {
+        
+        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+        return basket.size();       
     }
 
-    public double getOrderPercentile(LimitOrder lo) {
-        float percentil = 0;
-        if (lo.direction == 'A') {
+    private int getOrderPercentile(LimitOrder lo) {
 
+        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+
+        if(basket.isEmpty()){
+            return 1;
         }
 
-        if (lo.direction == 'B') {
+        int size = this.ask.size()+1;
+        int rank = this.getOrderRank(lo);
 
-        }
+        return (int) ( (100.0 * rank / size));
+    }
 
-        return percentil;
+
+    private int getOrderRankWithinPrice(LimitOrder lo) {
+        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+
+        return basket.stream()
+        .filter(order -> order.price == lo.price)
+        .collect(Collectors.toList()).size() + 1;
+
     }
 }

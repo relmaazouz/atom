@@ -248,9 +248,9 @@ public class StringOrderParser {
                 break;
             case 'S': // StopLossLimitOrder
                 dir = cols[5].charAt(0);
-                prixIntro = Long.parseLong(cols[6]);
+                prixIntro = Long.parseLong(cols[8]);
                 qty = Integer.parseInt(cols[7]);
-                seuil = Long.parseLong(cols[8]);
+                seuil = Long.parseLong(cols[6]);
                 order = new StopLossLimitOrder(obName, extId, dir, qty, prixIntro, seuil);
                 break;
             case 'R': // StopLossMarketOrder
