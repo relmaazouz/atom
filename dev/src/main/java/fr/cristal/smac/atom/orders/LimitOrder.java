@@ -56,4 +56,13 @@ public class LimitOrder extends Order implements Comparable<LimitOrder> {
     public int compareTo(LimitOrder other) {
         return Double.compare(this.price, other.price); // Sort by price in ascending order
     }
+
+    public int getQuantity(){
+        return this.quantity;
+    }
+
+
+    public double getPrice(){
+        return this.price;
+    }
 }

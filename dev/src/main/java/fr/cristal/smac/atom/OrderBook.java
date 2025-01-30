@@ -12,10 +12,11 @@ Date    : 14/12/2008
 
 package fr.cristal.smac.atom;
 
+import fr.cristal.smac.atom.OrderBook.Quintuplet;
 import fr.cristal.smac.atom.orders.*;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OrderBook {
     // this class is used only in the bestEvenPrice() method, to compute the
@@ -49,6 +50,7 @@ public class OrderBook {
     public PriceRecord lastFixedPrice;
     public List<StopLossLimitOrder> gateway; // waiting orders (kind of StopLimit)
     private List<StopLossLimitOrder> toRemove; // used in send to remove from gateway
+
 
     // extraday - Bandes de bollinger
     public long firstPriceOfDay, lastPriceOfDay, highestPriceOfDay, lowestPriceOfDay;
@@ -178,7 +180,7 @@ public class OrderBook {
 
         String extraString = "";
 
-        if (lo instanceof LimitOrder) {
+        if (lo instanceof LimitOrder ) {
             LimitOrder order = (LimitOrder) lo;
             if (order.quantity > maxQty) {
                 maxQty = order.quantity;
@@ -187,7 +189,18 @@ public class OrderBook {
                 minQty = order.quantity;
             }
             // for logging the feature metrics at order entry
-            extraString = ";" + this.getOrderRank(order) + ";" + this.getOrderRankWithinPrice(order) + ";" + this.get_bid_ask_spread()+";"+this.getOrderPercentile(order);
+            Agent a = lo.sender;
+            extraString = ";" + this.getOrderRank(order)
+                          + ";" + this.getOrderRankWithinPrice(order)
+                          +";" + this.getBidAskSpread()
+                          + ";" + this.getOrderPercentile(order)
+                          + ";" + this.getAgentOrderCountImbalance(a)
+                          + ";" + this.getAgentBuyPriceLevels(a)
+                          + ";" + this.getAgentSellPriceLevels(a)
+                          + ";" + this.getAgentVolumeImbalance(a)
+                          + ";" + this.getOrderPriceDistanceFromMid(order)
+                          + ";" + this.getRelativeBuySellSize(a, order)
+                          ;
         }
 
         /*
@@ -681,7 +694,7 @@ public class OrderBook {
         bid.removeAll(toRemove);
     }
 
-    private String get_bid_ask_spread() {
+    private String getBidAskSpread() {
 
         if (this.bid.isEmpty() || this.ask.isEmpty()) {
             return "*";
@@ -695,20 +708,14 @@ public class OrderBook {
 
     private int getOrderRank(LimitOrder lo) {
 
-        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+        TreeSet<LimitOrder> basket = lo.direction=='B' ? this.bid : this.ask;
 
         return basket.headSet(lo).size() +1 ;
     }
 
-    private int getBasketSize(LimitOrder lo) {
-        
-        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
-        return basket.size();       
-    }
-
     private int getOrderPercentile(LimitOrder lo) {
 
-        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+        TreeSet<LimitOrder> basket = lo.direction=='B' ? this.bid : this.ask;
 
         if(basket.isEmpty()){
             return 1;
@@ -721,12 +728,115 @@ public class OrderBook {
     }
 
 
-    private int getOrderRankWithinPrice(LimitOrder lo) {
-        TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+    private int getOrderRankWithinPrice(Order o) {
 
-        return basket.stream()
-        .filter(order -> order.price == lo.price)
-        .collect(Collectors.toList()).size() + 1;
+        if(o instanceof LimitOrder) {
+
+            LimitOrder lo = (LimitOrder) o;
+        
+            TreeSet<LimitOrder> basket = lo.direction=='A' ? this.ask : this.bid;
+
+            return basket.stream()
+            .filter(order -> order.price == lo.price)
+            .collect(Collectors.toList()).size() + 1;
+        }
+
+        if(o instanceof MarketOrder) {
+
+            MarketOrder mo = (MarketOrder) o;
+        
+            TreeSet<LimitOrder> basket = mo.direction=='A' ? this.ask : this.bid;
+
+            return basket.stream()
+            .filter(order -> order.price == mo.price)
+            .collect(Collectors.toList()).size() + 1;
+        }
+
+        return 0;
+
+
 
     }
+
+
+
+    private List<LimitOrder> getAgentOrders(String agenName, boolean isBuy) {
+        TreeSet<LimitOrder> orderSet = isBuy ? bid : ask;
+        return orderSet.stream()
+            .filter(order -> order.sender.name.equals(agenName))
+            .collect(Collectors.toList());
+    }
+
+    private double getAgentVolumeImbalance(Agent a){
+
+        // get agent (trader) orders
+
+        List<LimitOrder> agentBuyOrders = getAgentOrders(a.name, true);
+        List<LimitOrder> agentSellOrders = getAgentOrders(a.name, false);
+        
+        // calculate the total Bid and Ask volumes
+        long totalBidVolume = agentBuyOrders.stream().mapToLong(LimitOrder::getQuantity).sum();
+        long totalAskVolume = agentSellOrders.stream().mapToLong(LimitOrder::getQuantity).sum();
+        
+        double agentVolImab =  (totalBidVolume+totalAskVolume == 0)? 1:(totalBidVolume-totalAskVolume)/(totalBidVolume+totalAskVolume);
+
+        return agentVolImab;
+    }
+
+    private double getAgentOrderCountImbalance(Agent a){
+
+        // get agent (trader) orders
+        int agentBuyOrdersSize = getAgentOrders(a.name, true).size();
+        int agentSellOrdersSize = getAgentOrders(a.name, false).size();
+        
+        int totalOrders = agentBuyOrdersSize + agentSellOrdersSize;
+
+        if (totalOrders == 0) {
+            return 0.0;  // Or return Double.NaN;
+        }
+
+        return (double) (agentBuyOrdersSize - agentSellOrdersSize) / totalOrders;
+        
+    }
+
+    private double getOrderPriceDistanceFromMid(LimitOrder order){
+        double bestBid = bid.isEmpty() ? 0 : bid.first().getPrice();
+        double bestAsk = ask.isEmpty() ? 0 : ask.first().getPrice();
+        double midPrice = (bestBid + bestAsk) / 2.0;
+
+        if(midPrice==0.0){
+            return 0.0;
+        }
+
+        return (order.getPrice() - midPrice) / midPrice;
+        
+    }
+
+    private int getAgentBuyPriceLevels(Agent a){
+
+        return this.getAgentOrders(a.name, true).stream().map(LimitOrder::getPrice).collect(Collectors.toSet()).size();
+    }
+
+    private int getAgentSellPriceLevels(Agent a){
+
+        return this.getAgentOrders(a.name, false).stream().map(LimitOrder::getPrice).collect(Collectors.toSet()).size();
+    }
+
+    private double getRelativeBuySellSize(Agent a, LimitOrder newOrder){
+
+        Boolean isBuy = newOrder.direction == 'B' ? true : false;
+
+        List<LimitOrder> ordersList = getAgentOrders(a.name, isBuy);
+
+        if(ordersList.size() == 0){
+            return 0.0;
+        }
+
+        double avgSize = ordersList.stream().mapToDouble(LimitOrder::getQuantity).average().getAsDouble();
+
+        return (avgSize==0)? 1:newOrder.quantity/avgSize ;
+        
+    }
+
+
 }
