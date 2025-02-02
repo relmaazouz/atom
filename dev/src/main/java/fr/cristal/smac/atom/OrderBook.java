@@ -694,16 +694,16 @@ public class OrderBook {
         bid.removeAll(toRemove);
     }
 
-    private String getBidAskSpread() {
+    private double getBidAskSpread() {
 
-        if (this.bid.isEmpty() || this.ask.isEmpty()) {
-            return "*";
+        if (this.bid == null || this.bid.isEmpty() || this.ask == null || this.ask.isEmpty()) {
+            return 0.0;
         }
 
         double highestBid = this.bid.first().price;
         double lowestAsk = this.ask.last().price;
 
-        return "" + (highestBid - lowestAsk);
+        return (highestBid - lowestAsk);
     }
 
     private int getOrderRank(LimitOrder lo) {
